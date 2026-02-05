@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:13
+    container_name: ai-learning-db
+    environment:
+      POSTGRES_DB: ai_learning_accelerator
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-learning-network
+
+  # Redis (optional)
+  redis:
+    image: redis:6-alpine
+    container_name: ai-learning-redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ai-learning-network
+    profiles:
+      - with-redis
+
+  # Main Application
+  ai-learning-accelerator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-learning-app
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DATABASE_PASSWORD:-password}@postgres:5432/ai_learning_accelerator
+      - REDIS_URL=redis://redis:6379
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - MONITORING_ENABLED=${MONITORING_ENABLED:-true}
+      - REDIS_ENABLED=${REDIS_ENABLED:-false}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./models:/app/models
+      - ./logs:/app/logs
+    networks:
+      - ai-learning-network
+    restart: unless-stopped
+
+  # Frontend (optional)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-learning-frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ai-learning-accelerator
+    networks:
+      - ai-learning-network
+    profiles:
+      - with-frontend
+    restart: unless-stopped
+
+  # Nginx (for production)
+  nginx:
+    image: nginx:alpine
+    container_name: ai-learning-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ai-learning-accelerator
+    networks:
+      - ai-learning-network
+    profiles:
+      - production
+    restart: unless-stopped
+
+  # Monitoring (Prometheus)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-learning-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ai-learning-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-learning-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - ai-learning-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  ai-learning-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
