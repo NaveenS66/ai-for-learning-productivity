@@ -4,15 +4,24 @@ import random
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID
+from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
+# Temporary workaround for import issue
+class LearningPathStatus(str, Enum):
+    """Learning path status."""
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    PAUSED = "paused"
+    CANCELLED = "cancelled"
+
 from ..models.learning import (
     LearningGoal, LearningPath, LearningPathItem, CompetencyArea, 
     SkillAssessmentDetail, LearningRecommendation,
-    LearningGoalStatus, LearningPathStatus, PathItemStatus, SkillAssessmentType,
+    LearningGoalStatus, PathItemStatus, SkillAssessmentType,
     LearningRecommendationType
 )
 from ..models.user import User, UserProfile, SkillAssessment, SkillLevel, DifficultyLevel, LearningStyle

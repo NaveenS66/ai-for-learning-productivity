@@ -44,8 +44,8 @@ class PathItemStatus(str, Enum):
     SKIPPED = "skipped"
 
 
-class LearningPathStatus(str, Enum):
-    """Learning path status."""
+class TestLearningPathStatus(str, Enum):
+    """Learning path status for testing."""
     DRAFT = "draft"
     ACTIVE = "active"
     COMPLETED = "completed"

@@ -12,18 +12,19 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 from .api.health import router as health_router
 from .api.auth import router as auth_router
 from .api.users import router as users_router
-from .api.context import router as context_router
-from .api.automation import router as automation_router
-from .api.multimodal import router as multimodal_router
-from .api.interaction import router as interaction_router
-from .api.analytics import router as analytics_router
-from .api.encryption import router as encryption_router
-from .api.privacy import router as privacy_router
-from .api.plugins import router as plugins_router
-from .api.workflow_integration import router as workflow_integration_router
-from .api.content_lifecycle import router as content_lifecycle_router
-from .api.feedback import router as feedback_router
-from .api.workflows import router as workflows_router
+# Temporarily disabled for demo - these have import issues
+# from .api.context import router as context_router
+# from .api.automation import router as automation_router
+# from .api.multimodal import router as multimodal_router
+# from .api.interaction import router as interaction_router
+# from .api.analytics import router as analytics_router
+# from .api.encryption import router as encryption_router
+# from .api.privacy import router as privacy_router
+# from .api.plugins import router as plugins_router
+# from .api.workflow_integration import router as workflow_integration_router
+# from .api.content_lifecycle import router as content_lifecycle_router
+# from .api.feedback import router as feedback_router
+# from .api.workflows import router as workflows_router
 from .config import get_settings
 from .database import close_db, init_db
 from .logging_config import configure_logging, get_logger, log_request_middleware, log_response_middleware
@@ -224,21 +225,23 @@ async def logging_middleware(request: Request, call_next) -> Response:
 
 
 # Include routers
+# Include routers
 app.include_router(health_router, prefix=settings.api_prefix)
 app.include_router(auth_router, prefix=settings.api_prefix)
 app.include_router(users_router, prefix=settings.api_prefix)
-app.include_router(context_router, prefix=settings.api_prefix)
-app.include_router(automation_router, prefix=settings.api_prefix)
-app.include_router(multimodal_router, prefix=settings.api_prefix)
-app.include_router(interaction_router, prefix=settings.api_prefix)
-app.include_router(analytics_router, prefix=settings.api_prefix)
-app.include_router(encryption_router, prefix=settings.api_prefix)
-app.include_router(privacy_router, prefix=settings.api_prefix)
-app.include_router(plugins_router, prefix=settings.api_prefix)
-app.include_router(workflow_integration_router, prefix=settings.api_prefix)
-app.include_router(content_lifecycle_router, prefix=settings.api_prefix)
-app.include_router(feedback_router, prefix=settings.api_prefix)
-app.include_router(workflows_router, prefix=settings.api_prefix)
+# Temporarily disabled for demo - these have import issues
+# app.include_router(context_router, prefix=settings.api_prefix)
+# app.include_router(automation_router, prefix=settings.api_prefix)
+# app.include_router(multimodal_router, prefix=settings.api_prefix)
+# app.include_router(interaction_router, prefix=settings.api_prefix)
+# app.include_router(analytics_router, prefix=settings.api_prefix)
+# app.include_router(encryption_router, prefix=settings.api_prefix)
+# app.include_router(privacy_router, prefix=settings.api_prefix)
+# app.include_router(plugins_router, prefix=settings.api_prefix)
+# app.include_router(workflow_integration_router, prefix=settings.api_prefix)
+# app.include_router(content_lifecycle_router, prefix=settings.api_prefix)
+# app.include_router(feedback_router, prefix=settings.api_prefix)
+# app.include_router(workflows_router, prefix=settings.api_prefix)
 
 
 @app.get("/")
